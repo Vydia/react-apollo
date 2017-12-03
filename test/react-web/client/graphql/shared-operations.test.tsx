@@ -1,24 +1,26 @@
-
 import * as React from 'react';
 import * as renderer from 'react-test-renderer';
 import gql from 'graphql-tag';
 
 import ApolloClient from 'apollo-client';
+import { InMemoryCache as Cache } from 'apollo-cache-inmemory';
+import { ApolloLink } from 'apollo-link';
 
-const TestUtils = require('react-addons-test-utils');
+const TestUtils = require('react-dom/test-utils');
 
 declare function require(name: string);
 
-import { mockNetworkInterface } from '../../../../src/test-utils';
+import { mockSingleLink } from '../../../../src/test-utils';
 import { ApolloProvider, graphql, withApollo } from '../../../../src';
 import { compose } from '../../../../src/';
 
 describe('shared operations', () => {
-
   describe('withApollo', () => {
     it('passes apollo-client to props', () => {
-
-      const client = new ApolloClient();
+      const client = new ApolloClient({
+        link: new ApolloLink((o, f) => f(o)),
+        cache: new Cache(),
+      });
 
       @withApollo
       class ContainerWithData extends React.Component<any, any> {
@@ -28,22 +30,28 @@ describe('shared operations', () => {
         }
       }
 
-      renderer.create(<ApolloProvider client={client}><ContainerWithData /></ApolloProvider>);
+      renderer.create(
+        <ApolloProvider client={client}>
+          <ContainerWithData />
+        </ApolloProvider>,
+      );
     });
-    
+
     it('allows a way to access the wrapped component instance', () => {
-      
-      const client = new ApolloClient();
-      
+      const client = new ApolloClient({
+        link: new ApolloLink((o, f) => f(o)),
+        cache: new Cache(),
+      });
+
       const testData = { foo: 'bar' };
-      
+
       class Container extends React.Component<any, any> {
         someMethod() {
           return testData;
         }
 
         render() {
-          return <span></span>;
+          return <span />;
         }
       }
 
@@ -52,31 +60,77 @@ describe('shared operations', () => {
       const tree = TestUtils.renderIntoDocument(
         <ApolloProvider client={client}>
           <Decorated />
-        </ApolloProvider>
+        </ApolloProvider>,
       ) as any;
 
-      const decorated = TestUtils.findRenderedComponentWithType(tree, Decorated);
+      const decorated = TestUtils.findRenderedComponentWithType(
+        tree,
+        Decorated,
+      );
 
       expect(() => (decorated as any).someMethod()).toThrow();
-      expect((decorated as any).getWrappedInstance().someMethod()).toEqual(testData);
-      expect((decorated as any).refs.wrappedInstance.someMethod()).toEqual(testData);
+      expect((decorated as any).getWrappedInstance().someMethod()).toEqual(
+        testData,
+      );
+      expect((decorated as any).wrappedInstance.someMethod()).toEqual(testData);
 
+      const DecoratedWithSkip = withApollo(Container, {
+        withRef: true,
+        skip: true,
+      });
+
+      const treeWithSkip = TestUtils.renderIntoDocument(
+        <ApolloProvider client={client}>
+          <DecoratedWithSkip />
+        </ApolloProvider>,
+      ) as any;
+
+      const decoratedWithSkip = TestUtils.findRenderedComponentWithType(
+        treeWithSkip,
+        DecoratedWithSkip,
+      );
+
+      expect(() => (decoratedWithSkip as any).someMethod()).toThrow();
+      expect(
+        (decoratedWithSkip as any).getWrappedInstance().someMethod(),
+      ).toEqual(testData);
+      expect((decoratedWithSkip as any).wrappedInstance.someMethod()).toEqual(
+        testData,
+      );
     });
   });
 
   it('binds two queries to props', () => {
-    const peopleQuery = gql`query people { allPeople(first: 1) { people { name } } }`;
-    const peopleData = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
+    const peopleQuery = gql`
+      query people {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const peopleData = { allPeople: { people: [{ name: 'Luke Skywalker' }] } };
 
-    const shipsQuery = gql`query ships { allships(first: 1) { ships { name } } }`;
-    const shipsData = { allships: { ships: [ { name: 'Tie Fighter' } ] } };
+    const shipsQuery = gql`
+      query ships {
+        allships(first: 1) {
+          ships {
+            name
+          }
+        }
+      }
+    `;
+    const shipsData = { allships: { ships: [{ name: 'Tie Fighter' }] } };
 
-
-    const networkInterface = mockNetworkInterface(
+    const link = mockSingleLink(
       { request: { query: peopleQuery }, result: { data: peopleData } },
-      { request: { query: shipsQuery }, result: { data: shipsData } }
+      { request: { query: shipsQuery }, result: { data: shipsData } },
     );
-    const client = new ApolloClient({ networkInterface, addTypename: false });
+    const client = new ApolloClient({
+      link,
+      cache: new Cache({ addTypename: false }),
+    });
 
     const withPeople = graphql(peopleQuery, { name: 'people' });
     const withShips = graphql(shipsQuery, { name: 'ships' });
@@ -95,53 +149,105 @@ describe('shared operations', () => {
       }
     }
 
-    const wrapper = renderer.create(<ApolloProvider client={client} ><ContainerWithData /></ApolloProvider>);
+    const wrapper = renderer.create(
+      <ApolloProvider client={client}>
+        <ContainerWithData />
+      </ApolloProvider>,
+    );
     (wrapper as any).unmount();
   });
 
   it('binds two queries to props with different syntax', () => {
-    const peopleQuery = gql`query people { allPeople(first: 1) { people { name } } }`;
-    const peopleData = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
+    const peopleQuery = gql`
+      query people {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const peopleData = { allPeople: { people: [{ name: 'Luke Skywalker' }] } };
 
-    const shipsQuery = gql`query ships { allships(first: 1) { ships { name } } }`;
-    const shipsData = { allships: { ships: [ { name: 'Tie Fighter' } ] } };
+    const shipsQuery = gql`
+      query ships {
+        allships(first: 1) {
+          ships {
+            name
+          }
+        }
+      }
+    `;
+    const shipsData = { allships: { ships: [{ name: 'Tie Fighter' }] } };
 
-
-    const networkInterface = mockNetworkInterface(
+    const link = mockSingleLink(
       { request: { query: peopleQuery }, result: { data: peopleData } },
-      { request: { query: shipsQuery }, result: { data: shipsData } }
+      { request: { query: shipsQuery }, result: { data: shipsData } },
     );
-    const client = new ApolloClient({ networkInterface, addTypename: false });
+    const client = new ApolloClient({
+      link,
+      cache: new Cache({ addTypename: false }),
+    });
 
     const withPeople = graphql(peopleQuery, { name: 'people' });
     const withShips = graphql(shipsQuery, { name: 'ships' });
 
-    const ContainerWithData = withPeople(withShips((props) => {
-      const { people, ships } = props;
-      expect(people).toBeTruthy();
-      expect(people.loading).toBe(true);
+    const ContainerWithData = withPeople(
+      withShips(props => {
+        const { people, ships } = props;
+        expect(people).toBeTruthy();
+        expect(people.loading).toBe(true);
 
-      expect(ships).toBeTruthy();
-      expect(ships.loading).toBe(true);
-      return null;
-    }));
+        expect(ships).toBeTruthy();
+        expect(ships.loading).toBe(true);
+        return null;
+      }),
+    );
 
-    const wrapper = renderer.create(<ApolloProvider client={client}><ContainerWithData /></ApolloProvider>);
+    const wrapper = renderer.create(
+      <ApolloProvider client={client}>
+        <ContainerWithData />
+      </ApolloProvider>,
+    );
     (wrapper as any).unmount();
   });
 
   it('binds two operations to props', () => {
-    const peopleQuery = gql`query people { allPeople(first: 1) { people { name } } }`;
-    const peopleData = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
+    const peopleQuery = gql`
+      query people {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const peopleData = { allPeople: { people: [{ name: 'Luke Skywalker' }] } };
 
-    const peopleMutation = gql`mutation addPerson { allPeople(first: 1) { people { name } } }`;
-    const peopleMutationData = { allPeople: { people: [ { name: 'Leia Skywalker' } ] } };
+    const peopleMutation = gql`
+      mutation addPerson {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const peopleMutationData = {
+      allPeople: { people: [{ name: 'Leia Skywalker' }] },
+    };
 
-    const networkInterface = mockNetworkInterface(
+    const link = mockSingleLink(
       { request: { query: peopleQuery }, result: { data: peopleData } },
-      { request: { query: peopleMutation }, result: { data: peopleMutationData } }
+      {
+        request: { query: peopleMutation },
+        result: { data: peopleMutationData },
+      },
     );
-    const client = new ApolloClient({ networkInterface, addTypename: false });
+    const client = new ApolloClient({
+      link,
+      cache: new Cache({ addTypename: false }),
+    });
 
     const withPeople = graphql(peopleQuery, { name: 'people' });
     const withPeopleMutation = graphql(peopleMutation, { name: 'addPerson' });
@@ -159,15 +265,33 @@ describe('shared operations', () => {
       }
     }
 
-    const wrapper = renderer.create(<ApolloProvider client={client}><ContainerWithData /></ApolloProvider>);
+    const wrapper = renderer.create(
+      <ApolloProvider client={client}>
+        <ContainerWithData />
+      </ApolloProvider>,
+    );
     (wrapper as any).unmount();
   });
 
   it('allows a way to access the wrapped component instance', () => {
-    const query = gql`query people { allPeople(first: 1) { people { name } } }`;
-    const data = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
-    const networkInterface = mockNetworkInterface({ request: { query }, result: { data } });
-    const client = new ApolloClient({ networkInterface, addTypename: false });
+    const query = gql`
+      query people {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const data = { allPeople: { people: [{ name: 'Luke Skywalker' }] } };
+    const link = mockSingleLink({
+      request: { query },
+      result: { data },
+    });
+    const client = new ApolloClient({
+      link,
+      cache: new Cache({ addTypename: false }),
+    });
 
     const testData = { foo: 'bar' };
 
@@ -177,7 +301,7 @@ describe('shared operations', () => {
       }
 
       render() {
-        return <span></span>;
+        return <span />;
       }
     }
 
@@ -186,22 +310,60 @@ describe('shared operations', () => {
     const tree = TestUtils.renderIntoDocument(
       <ApolloProvider client={client}>
         <Decorated />
-      </ApolloProvider>
+      </ApolloProvider>,
     ) as any;
 
     const decorated = TestUtils.findRenderedComponentWithType(tree, Decorated);
 
     expect(() => (decorated as any).someMethod()).toThrow();
-    expect((decorated as any).getWrappedInstance().someMethod()).toEqual(testData);
-    expect((decorated as any).refs.wrappedInstance.someMethod()).toEqual(testData);
+    expect((decorated as any).getWrappedInstance().someMethod()).toEqual(
+      testData,
+    );
+    expect((decorated as any).wrappedInstance.someMethod()).toEqual(testData);
 
+    const DecoratedWithSkip = graphql(query, { withRef: true, skip: true })(
+      Container,
+    );
+
+    const treeWithSkip = TestUtils.renderIntoDocument(
+      <ApolloProvider client={client}>
+        <DecoratedWithSkip />
+      </ApolloProvider>,
+    ) as any;
+
+    const decoratedWithSkip = TestUtils.findRenderedComponentWithType(
+      treeWithSkip,
+      DecoratedWithSkip,
+    );
+
+    expect(() => (decoratedWithSkip as any).someMethod()).toThrow();
+    expect(
+      (decoratedWithSkip as any).getWrappedInstance().someMethod(),
+    ).toEqual(testData);
+    expect((decoratedWithSkip as any).wrappedInstance.someMethod()).toEqual(
+      testData,
+    );
   });
 
-  it('allows options to take an object', (done) => {
-    const query = gql`query people { allPeople(first: 1) { people { name } } }`;
-    const data = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
-    const networkInterface = mockNetworkInterface({ request: { query }, result: { data } });
-    const client = new ApolloClient({ networkInterface, addTypename: false });
+  it('allows options to take an object', done => {
+    const query = gql`
+      query people {
+        allPeople(first: 1) {
+          people {
+            name
+          }
+        }
+      }
+    `;
+    const data = { allPeople: { people: [{ name: 'Luke Skywalker' }] } };
+    const link = mockSingleLink({
+      request: { query },
+      result: { data },
+    });
+    const client = new ApolloClient({
+      link,
+      cache: new Cache({ addTypename: false }),
+    });
 
     let queryExecuted;
     @graphql(query, { options: { skip: true } })
@@ -213,37 +375,64 @@ describe('shared operations', () => {
         expect(this.props.data).toBeUndefined;
         return null;
       }
-    };
+    }
 
-    renderer.create(<ApolloProvider client={client}><Container /></ApolloProvider>);
+    renderer.create(
+      <ApolloProvider client={client}>
+        <Container />
+      </ApolloProvider>,
+    );
 
     setTimeout(() => {
-      if (!queryExecuted) { done(); return; }
+      if (!queryExecuted) {
+        done();
+        return;
+      }
       fail(new Error('query ran even though skip present'));
     }, 25);
   });
 
   describe('compose', () => {
     it('binds two queries to props with different syntax', () => {
-      const peopleQuery = gql`query people { allPeople(first: 1) { people { name } } }`;
-      const peopleData = { allPeople: { people: [ { name: 'Luke Skywalker' } ] } };
+      const peopleQuery = gql`
+        query people {
+          allPeople(first: 1) {
+            people {
+              name
+            }
+          }
+        }
+      `;
+      const peopleData = {
+        allPeople: { people: [{ name: 'Luke Skywalker' }] },
+      };
 
-      const shipsQuery = gql`query ships { allships(first: 1) { ships { name } } }`;
-      const shipsData = { allships: { ships: [ { name: 'Tie Fighter' } ] } };
+      const shipsQuery = gql`
+        query ships {
+          allships(first: 1) {
+            ships {
+              name
+            }
+          }
+        }
+      `;
+      const shipsData = { allships: { ships: [{ name: 'Tie Fighter' }] } };
 
-
-      const networkInterface = mockNetworkInterface(
+      const link = mockSingleLink(
         { request: { query: peopleQuery }, result: { data: peopleData } },
-        { request: { query: shipsQuery }, result: { data: shipsData } }
+        { request: { query: shipsQuery }, result: { data: shipsData } },
       );
-      const client = new ApolloClient({ networkInterface, addTypename: false });
+      const client = new ApolloClient({
+        link,
+        cache: new Cache({ addTypename: false }),
+      });
 
       const enhanced = compose(
         graphql(peopleQuery, { name: 'people' }),
-        graphql(shipsQuery, { name: 'ships' })
+        graphql(shipsQuery, { name: 'ships' }),
       );
 
-      const ContainerWithData = enhanced((props) => {
+      const ContainerWithData = enhanced(props => {
         const { people, ships } = props;
         expect(people).toBeTruthy();
         expect(people.loading).toBe(true);
@@ -253,9 +442,12 @@ describe('shared operations', () => {
         return null;
       });
 
-      const wrapper = renderer.create(<ApolloProvider client={client}><ContainerWithData /></ApolloProvider>);
+      const wrapper = renderer.create(
+        <ApolloProvider client={client}>
+          <ContainerWithData />
+        </ApolloProvider>,
+      );
       (wrapper as any).unmount();
     });
   });
-
 });

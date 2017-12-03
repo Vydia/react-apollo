@@ -30,3 +30,13 @@ node_modules
 lib
 test-lib
 dist
+npm
+.reports
+
+# don't track yarn lock but allow contributors to use it for local dev
+yarn.lock
+package-lock.json
+
+# flow
+!flow-typed/npm 
+

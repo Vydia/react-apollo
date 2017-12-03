@@ -1,6 +1,128 @@
 # Change log
 
-Expect active development and potentially significant breaking changes in the `0.x` track. We'll try to be diligent about releasing a `1.0` version in a timely fashion (ideally within 1 or 2 months), so that we can take advantage of SemVer to signify breaking changes from that point on.
+### vNext
+
+### 2.0.1
+- upgraded required apollo-client for bugfix for subscriptions
+- add component name in unhandled error message [#1362](https://github.com/apollographql/react-apollo/pull/1362)
+- upgraded flow support to 0.59.0 :tada: [#1354](https://github.com/apollographql/react-apollo/pull/1354)
+- skip null items on SSR if present [#1355](https://github.com/apollographql/react-apollo/pull/1355)
+
+
+### 2.0.1
+- fix skip on component update [#1330](https://github.com/apollographql/react-apollo/pull/1330)
+- Correctly provide the generic cache type to ApolloProvider [#1319](https://github.com/apollographql/react-apollo/pull/1319)
+- Correctly initializes component state as null (not undefined) [#1300](https://github.com/apollographql/react-apollo/pull/1310)
+
+### 2.0.0
+- BREAKING: removed cleanupApolloState as it is no longer needed!
+- Exported getDataFromTree on the client
+- Removed `redux` from peer dependencies. [Issue #1223](https://github.com/apollographql/react-apollo/issues/1223) [PR #1224](https://github.com/apollographql/react-apollo/pull/1224)
+- Support arrays being returned from render in SSR [#1158](https://github.com/apollographql/react-apollo/pull/1158)
+- Support passing an updater function to `setState` in SSR mode [#1263](https://github.com/apollographql/react-apollo/pull/1263)
+
+### 2.0.0-beta.0
+- upgrade to Apollo Client 2.0
+- remove direct dependencies on Apollo Client, graphql-tag
+- fix skip on component update.
+- Fix: ensure `client` option can be used with mutation query [#1145](https://github.com/apollographql/react-apollo/pull/1145)
+- Made `OptionProps.data`'s `TResult` partial [#1231](https://github.com/apollographql/react-apollo/pull/1231)
+
+### 1.4.16
+- upgrade to react-16
+- fix shallowEqual bug.
+- Added notifyOnNetworkStatusChange to QueryOpts and MutationOpts Typesccript definitions [#1034](https://github.com/apollographql/react-apollo/pull/1034)
+- Added variables types with Typescript [#997](https://github.com/apollographql/react-apollo/pull/997)
+- Made `ChildProps.data` non-optional [#1143](https://github.com/apollographql/react-apollo/pull/1143)
+
+### 1.4.15
+- Fix: handle calling refetch in child componentDidMount
+- Fix: ensure options gets up to date props [#1025](https://github.com/apollographql/react-apollo/pull/1005)
+- Fix: ensure queryRecycler exists before using it
+- MockNetworkInterface match mock requests regardless of variable order [#973](https://github.com/apollographql/react-apollo/pull/973)
+- Allow to pass removeTypenames to MockedProvider [#1001](https://github.com/apollographql/react-apollo/pull/1001)
+
+### 1.4.14
+- Fix: Scope query recyclers by client [#876](https://github.com/apollographql/react-apollo/pull/876)
+
+### 1.4.13 [DEPRECATED]
+- Support apollo-client 2.0
+
+### 1.4.12
+- Fix: fix issue with bad deploy
+
+### 1.4.11 (BROKEN)
+- Replace string refs with callback refs [#908](https://github.com/apollographql/react-apollo/pull/908)
+
+### 1.4.10
+- Fix: fix UMD bundle pointing to apolloClient for some reason
+
+### 1.4.9
+- Fix: fix matching types with exports for flow and ts
+
+### 1.4.8
+- Fix: Ensure typescript and flow type definitions match in name
+
+### 1.4.7
+- Feature: Add support for flow typecheck to work out of the box (without any configuration)
+
+### 1.4.6
+- Fix: Fix issue where `withRef`-option of `graphql` did not work when the query was skipped [#865](https://github.com/apollographql/react-apollo/pull/865)
+
+### 1.4.5
+- Fix: export all types from main type file
+
+### 1.4.4
+- Fix: Fix issue around hoisting non react statics for RN [#859](https://github.com/apollographql/react-apollo/pull/859)
+- Fix: Fix issue where options was called even though skip was present [#859](https://github.com/apollographql/react-apollo/pull/859)
+- Improvement: Allow for better typescript usage with improved types [#862](https://github.com/apollographql/react-apollo/pull/862)
+
+### 1.4.3
+- Feature: You can now supply a client in options object passed to the `graphql` high oder component. [PR #729](https://github.com/apollographql/react-apollo/pull/729)
+- Fix: Fix issue when using flow definitions [PR# 787](https://github.com/apollographql/react-apollo/pull/787)
+- Improvement: Reduce re-renders by using forceUpdate instead of setState({  }) [PR #775](https://github.com/apollographql/react-apollo/pull/775)
+- Improvement: Refactor dataForChild to use bound function to reduce rerenders [PR #772](https://github.com/apollographql/react-apollo/pull/772)
+- Fix: Add in missing types for MutationOpts [PR #770](https://github.com/apollographql/react-apollo/pull/770)
+
+### 1.4.2
+- Fix: Fix component reference and variable statement for flow types
+
+### 1.4.1
+- Fix: Fix compilation of test-utils from move to ES bundles
+
+### 1.4.0
+#### BREAKING FOR TYPESCRIPT USERS
+- Feature: Enhanced typescript definitions to allow for more valid type checking of graphql HOC [PR #695](https://github.com/apollographql/react-apollo/pull/695)
+- Feature: Flow types: [PR #695](https://github.com/apollographql/react-apollo/pull/695)
+- Fix: Fix bug with sync re-renders and recyled queries [PR #740](https://github.com/apollographql/react-apollo/pull/740)
+
+### 1.3.0
+- Feature: Support tree shaking and smaller (marginally) bundles via rollup [PR #691](https://github.com/apollographql/react-apollo/pull/691)
+- Fix: Render full markup on the server when using the `cache-and-network` fetchPolicy [PR #688](https://github.com/apollographql/react-apollo/pull/688)
+
+### 1.2.0
+- Fix: Use `standby` fetchPolicy for recycled queries [PR #671](https://github.com/apollographql/react-apollo/pull/671)
+
+### 1.1.3
+- Perf: Removed unneeded usage of shouldComponentUpdate [PR #661](https://github.com/apollographql/react-apollo/pull/661) inspired by [PR #653](https://github.com/apollographql/react-apollo/pull/653)
+- Perf: Removed  unneeded usage of shouldComponentUpdate in Provider [PR #669](https://github.com/apollographql/react-apollo/pull/669)
+- Chore: remove unused immutable prop [PR #539](https://github.com/apollographql/react-apollo/pull/539)
+
+### 1.1.2
+- Fix: Re-export all Apollo Client exports from react-apollo [PR #650](https://github.com/apollographql/react-apollo/pull/650)
+- Chore: Include React 16 alpha in dependency version range [PR #647](https://github.com/apollographql/react-apollo/pull/647)
+
+### 1.1.1
+- Fix: move prop-types from devDependencies to dependencies [PR #656](https://github.com/apollographql/react-apollo/pull/656)
+
+### 1.1.0 (deprecated)
+- Pass cached data to the child component along with the error. [PR #548](https://github.com/apollographql/react-apollo/pull/548)
+- Fix version lock down for peer dependency version of React. [PR #626](https://github.com/apollographql/react-apollo/pull/626)
+- Switch `graphql-tag` dependency to `2.0.0`. This isn't really a breaking change because we only export `gql` from `react-apollo`.
+- Fix: convert deprecated `React.PropTypes` to `PropTypes` provided by the `prop-types` package. [PR #628](https://github.com/apollographql/react-apollo/pull/628)
+
+### 1.0.2
+- Exposed `createBatchingNetworkInterface` from apollo-client so that it can be imported from react-apollo just like `createNetworkInterface`. [PR #618](https://github.com/apollographql/react-apollo/pull/618)
 
 ### 1.0.1
 - Fix: Make sure recycled queries are in cache only mode so they do not trigger network requests. [PR #531](https://github.com/apollographql/react-apollo/pull/531)
